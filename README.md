@@ -16,5 +16,19 @@
   - include：easyos的头文件
   - kernel：内核源码
 - `test`：测试目录
-- `makefile`
-- `README.md`
+- makefile
+- README.md
+
+## 开发流程
+
+将严格的进行测试，确保每一次提交，都能够正常的运行调试。提交的格式按照\<options>[msgbody]进行，options如下：
+
+- docs：修改文档
+- fix：修改bug
+- add：增加功能
+
+## 编译命令
+
+- make build：只编译os
+- make run：运行
+- make debug：使用vscode、bochs-gdb进行可视化调试
