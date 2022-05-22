@@ -1,0 +1,10 @@
+{
+    "makefile.extensionOutputFolder": "./.vscode",
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "/root/EasyOS/build",
+            "binaryPath": "/root/EasyOS/build/kernel.bin",
+            "binaryArgs": []
+        }
+    ]
+}
