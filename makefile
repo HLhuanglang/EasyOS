@@ -1,23 +1,38 @@
-# makefile顶层目录
-TOP_DIR=$(shell pwd)
+RISCVGNU ?= riscv64-unknown-elf
 
-# 输出程序目录
-OUT_DIR=$(TOP_DIR)/build
-SRC_DIT=$(TOP_DIR)/src
+COPS += -g -Wall -nostdlib  -Iinclude 
+ASMOPS = -g -Iinclude 
 
-build : $(OUT_DIR)/boot/boot.bin
-	bximage -q -hd=16 -func=create -sectsize=512 -imgmode=flat $(OUT_DIR)/easyos.img
-	dd if=$(OUT_DIR)/boot/boot.bin of=$(OUT_DIR)/easyos.img bs=512 count=1 conv=notrunc
+BUILD_DIR = build
+SRC_DIR = src
 
-$(OUT_DIR)/boot/%.bin : $(SRC_DIT)/boot/%.asm
-	$(shell mkdir -p $(dir $@))
-	nasm -f bin $< -o $@
+all : clean kernel.img
 
-clean:
-	rm -rf $(OUT_DIR)
+clean :
+	rm -rf $(BUILD_DIR) *.img kernel.map
+
+$(BUILD_DIR)/%_c.o: $(SRC_DIR)/%.c
+	mkdir -p $(@D)
+	$(RISCVGNU)-gcc $(COPS) -MMD -c $< -o $@
+
+$(BUILD_DIR)/%_s.o: $(SRC_DIR)/%.S
+	$(RISCVGNU)-gcc $(ASMOPS) -MMD -c -D__ASSEMBLY__ $< -o $@
+
+C_FILES = $(wildcard $(SRC_DIR)/*.c)
+ASM_FILES = $(wildcard $(SRC_DIR)/*.S)
+OBJ_FILES = $(C_FILES:$(SRC_DIR)/%.c=$(BUILD_DIR)/%_c.o)
+OBJ_FILES += $(ASM_FILES:$(SRC_DIR)/%.S=$(BUILD_DIR)/%_s.o)
+
+DEP_FILES = $(OBJ_FILES:%.o=%.d)
+-include $(DEP_FILES)
+
+kernel.img: $(SRC_DIR)/linker.ld $(OBJ_FILES)
+	$(RISCVGNU)-ld -T $(SRC_DIR)/linker.ld -Map kernel.map -o $(BUILD_DIR)/kernel.elf  $(OBJ_FILES)
+	$(RISCVGNU)-objcopy $(BUILD_DIR)/kernel.elf -O binary kernel.img
+
+QEMU_FLAGS  += -nographic
 
 run:
-	bochs -q -f ./bochs/bochsrc
-
-.PHONY: build clean
-
+	qemu-system-riscv64 -machine virt -bios none -kernel build/kernel.elf  $(QEMU_FLAGS)
+debug:
+	qemu-system-riscv64 -M virt -bios none $(QEMU_FLAGS) -kernel build/kernel.elf  -S -s

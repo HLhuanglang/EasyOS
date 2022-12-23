@@ -1,3 +1,7 @@
 bx_enh_dbg.ini
 build/
 *.log
+.cache
+compile_commands.json
+kernel.img
+kernel.map
